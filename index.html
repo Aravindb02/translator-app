@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translator App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(46, 46, 46, 0.434);
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #575757;
+        }
+
+        label {
+            font-size: 16px;
+            margin-right: 10px;
+            color: #555;
+        }
+
+        textarea {
+            width: 80%;
+            padding: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            resize: vertical;
+            display: inline-block;
+            vertical-align: top; /* Align with the buttons */
+        }
+
+        select {
+            padding: 8px;
+            font-size: 14px;
+            vertical-align: top; /* Align with the buttons */
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 10px;
+            vertical-align: top; /* Align with the text area */
+        }
+
+        #translateButton {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        #translateButton:hover {
+            background-color: #45a049;
+        }
+
+        #speakButton, #talkButton {
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 8px;
+            margin-left: 5px;
+            padding: 10px;
+            vertical-align: top;
+            color: #fff; /* Align with the text area */
+        }
+
+        #speakButton img, #talkButton img {
+            width: 20px;
+            height: 20px;
+        }
+
+        #speakButton:hover, #talkButton:hover {
+            background-color: #45a049;
+        }
+
+        #resultBox {
+            border: 2px solid #4CAF50;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        #result {
+            font-size: 18px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Translator App</h1>
+        <label for="sourceText">Enter text or speak:</label>
+        <textarea id="sourceText" rows="3" placeholder="Enter the text or speak"></textarea>
+        <button id="talkButton" onclick="startSpeechRecognition()">SPEAK</button>
+        <button id="translateButton" onclick="translateText()">Translate</button>
+        <button id="speakButton" onclick="speakTranslation()">HEAR</button>
+        <label for="targetLanguage">TRANSLATE TO:</label>
+        <select id="targetLanguage">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="kn">Kannada</option>
+            <!-- Add more languages as needed -->
+        </select><br>
+        <div id="resultBox">
+            <label for="result">Translation:</label>
+            <p id="result"></p>
+        </div>
+    </div>
+
+    <script>
+      async function translateText() {
+          const sourceText = document.getElementById('sourceText').value;
+          const targetLanguage = document.getElementById('targetLanguage').value;
+  
+          try {
+              const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sourceText)}`);
+              const data = await response.json();
+  
+              if (data && data[0] && data[0][0]) {
+                  const translation = data[0][0][0];
+                  document.getElementById('result').innerText = translation;
+              } else {
+                  document.getElementById('result').innerText = 'Translation failed. Please try again.';
+              }
+          } catch (error) {
+              console.error('Error:', error);
+              document.getElementById('result').innerText = 'Translation failed. Please try again.';
+          }
+      }
+  
+      function speakTranslation() {
+          const translation = document.getElementById('result').innerText;
+          const targetLanguage = document.getElementById('targetLanguage').value;
+  
+          if (translation.trim() !== '') {
+              const utterance = new SpeechSynthesisUtterance(translation);
+  
+              // Set the language for speech synthesis based on the target language
+              utterance.lang = getLanguageCode(targetLanguage);
+  
+              window.speechSynthesis.speak(utterance);
+          }
+      }
+  
+      function getLanguageCode(language) {
+          // Map the target languages to their corresponding language codes
+          const languageCodes = {
+              'en': 'en-US', // English
+              'hi': 'hi-IN', // Hindi
+              'kn': 'kn-IN'  // Kannada
+              // Add more languages as needed
+          };
+  
+          return languageCodes[language] || 'en-US'; // Default to English if the language code is not found
+      }
+  
+      function startSpeechRecognition() {
+          const recognition = new webkitSpeechRecognition();
+  
+          recognition.onresult = function (event) {
+              const result = event.results[0][0].transcript;
+              document.getElementById('sourceText').value = result;
+          };
+  
+          const targetLanguage = document.getElementById('targetLanguage').value;
+  
+          // Set the language for speech recognition based on the target language
+          recognition.lang = getLanguageCode(targetLanguage);
+  
+          recognition.start();
+      }
+  </script>
+  
+</html>
